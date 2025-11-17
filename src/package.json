@@ -1,0 +1,19 @@
+{
+  "name": "infinite-dog-app",
+  "version": "1.0.0",
+  "description": "React Infinite Dog App based on Brad Schiff's Dogs, JavaScript & An API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "author": "Venkataramaraju Madapa",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1"
+  }
+}

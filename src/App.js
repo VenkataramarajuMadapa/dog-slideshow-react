@@ -1,23 +1,65 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css";
+import Slideshow from "./slideshow";
 
 function App() {
+  const [breeds, setBreeds] = useState([]);
+  const [selectedBreed, setSelectedBreed] = useState("");
+  const [images, setImages] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Fetch breed list on first load
+  useEffect(() => {
+    fetch("https://dog.ceo/api/breeds/list/all")
+      .then((res) => res.json())
+      .then((data) => setBreeds(Object.keys(data.message)))
+      .catch((err) => console.error("Error getting breeds:", err));
+  }, []);
+
+  // Fetch images for selected breed
+  useEffect(() => {
+    if (!selectedBreed) return;
+
+    fetch(`https://dog.ceo/api/breed/${selectedBreed}/images`)
+      .then((res) => res.json())
+      .then((data) => {
+        setImages(data.message);
+        setCurrentIndex(0);
+      })
+      .catch((err) => console.error("Error getting images:", err));
+  }, [selectedBreed]);
+
+  // Slideshow auto-rotation
+  useEffect(() => {
+    if (images.length < 2) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((i) => (i + 1) % images.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [images]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <div className="app">
+      <div className="header">
+        <h1>Infinite Dog App</h1>
+
+        <select
+          value={selectedBreed}
+          onChange={(e) => setSelectedBreed(e.target.value)}
         >
-          Learn React
-        </a>
-      </header>
+          <option value="">Choose a dog breed</option>
+          {breeds.map((breed) => (
+            <option key={breed} value={breed}>
+              {breed}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* ⬇ Use the Slideshow component here */}
+      <Slideshow images={images} currentIndex={currentIndex} />
     </div>
   );
 }
