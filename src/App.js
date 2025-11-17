@@ -1,3 +1,7 @@
+// This file was written with guidance from ChatGPT for learning purposes.
+// Author: Venkataramaraju Madapa
+// Date: 11-15-2025
+
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import Slideshow from "./slideshow";
