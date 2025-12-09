@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { AuthProvider, useAuth } from "./AuthContext"; // ✅ only this
+import { AuthProvider, useAuth } from "./AuthContext";
+import { db } from "./firebase";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+} from "firebase/firestore";
 import "./App.css";
-// import { auth, googleProvider, db } from "./firebase";
 
 function App() {
   const { currentUser, signInWithGoogle, logout } = useAuth();
@@ -10,6 +17,26 @@ function App() {
   const [selectedBreed, setSelectedBreed] = useState("");
   const [images, setImages] = useState([]);
   const [index, setIndex] = useState(0);
+  const [loginHistory, setLoginHistory] = useState([]);
+
+  // Fetch login history from Firestore
+  useEffect(() => {
+    const q = query(
+      collection(db, "logins"),
+      orderBy("timestamp", "desc"),
+      limit(10)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const logins = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setLoginHistory(logins);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Fetch dog breeds
   useEffect(() => {
@@ -50,8 +77,10 @@ function App() {
         <div className="auth-actions">
           {currentUser ? (
             <>
-              <img src={currentUser.photoURL} className="avatar" alt="avatar"/>
-              <button onClick={logout} className="logout-btn">Logout</button>
+              <img src={currentUser.photoURL} className="avatar" alt="avatar" />
+              <button onClick={logout} className="logout-btn">
+                Logout
+              </button>
             </>
           ) : (
             <button onClick={signInWithGoogle} className="login-btn">
@@ -89,6 +118,42 @@ function App() {
           />
         </div>
       )}
+
+      {/* -------- Login History Section -------- */}
+      <div className="card" style={{ marginTop: "30px", width: "500px" }}>
+        <h3>👥 Recent Logins</h3>
+        {loginHistory.length === 0 ? (
+          <p>No logins yet</p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, textAlign: "left" }}>
+            {loginHistory.map((login) => (
+              <li
+                key={login.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "8px 0",
+                  borderBottom: "1px solid rgba(0,0,0,0.1)",
+                }}
+              >
+                <img
+                  src={login.photoURL}
+                  alt={login.displayName}
+                  style={{ width: "32px", height: "32px", borderRadius: "50%" }}
+                />
+                <div>
+                  <strong>{login.displayName}</strong>
+                  <br />
+                  <small style={{ opacity: 0.7 }}>
+                    {login.timestamp?.toDate?.().toLocaleString() || "Just now"}
+                  </small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {/* -------- Footer -------- */}
       <footer className="footer">
