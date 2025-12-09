@@ -1,0 +1,1 @@
+# dog-slideshow-react-template
