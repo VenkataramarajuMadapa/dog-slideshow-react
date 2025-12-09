@@ -1,26 +1,25 @@
-// This file was written with guidance from ChatGPT for learning purposes.
-// Author: Venkataramaraju Madapa
-// Date: 11-15-2025
-
 import React, { useState, useEffect } from "react";
+import { AuthProvider, useAuth } from "./AuthContext"; // ✅ only this
 import "./App.css";
-import Slideshow from "./slideshow";
+// import { auth, googleProvider, db } from "./firebase";
 
 function App() {
+  const { currentUser, signInWithGoogle, logout } = useAuth();
+
   const [breeds, setBreeds] = useState([]);
   const [selectedBreed, setSelectedBreed] = useState("");
   const [images, setImages] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [index, setIndex] = useState(0);
 
-  // Fetch breed list on first load
+  // Fetch dog breeds
   useEffect(() => {
     fetch("https://dog.ceo/api/breeds/list/all")
       .then((res) => res.json())
       .then((data) => setBreeds(Object.keys(data.message)))
-      .catch((err) => console.error("Error getting breeds:", err));
+      .catch(() => console.log("Error fetching breeds"));
   }, []);
 
-  // Fetch images for selected breed
+  // Fetch breed images
   useEffect(() => {
     if (!selectedBreed) return;
 
@@ -28,44 +27,82 @@ function App() {
       .then((res) => res.json())
       .then((data) => {
         setImages(data.message);
-        setCurrentIndex(0);
-      })
-      .catch((err) => console.error("Error getting images:", err));
+        setIndex(0);
+      });
   }, [selectedBreed]);
 
-  // Slideshow auto-rotation
+  // Auto slideshow
   useEffect(() => {
     if (images.length < 2) return;
 
-    const interval = setInterval(() => {
-      setCurrentIndex((i) => (i + 1) % images.length);
+    const t = setInterval(() => {
+      setIndex((prev) => (prev + 1) % images.length);
     }, 3000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(t);
   }, [images]);
 
   return (
-    <div className="app">
-      <div className="header">
-        <h1>Infinite Dog App</h1>
+    <div className="page">
+      {/* -------- Navigation Bar -------- */}
+      <div className="nav">
+        <h2 className="logo">🐶 Dog Explorer</h2>
+        <div className="auth-actions">
+          {currentUser ? (
+            <>
+              <img src={currentUser.photoURL} className="avatar" alt="avatar"/>
+              <button onClick={logout} className="logout-btn">Logout</button>
+            </>
+          ) : (
+            <button onClick={signInWithGoogle} className="login-btn">
+              Sign in with Google
+            </button>
+          )}
+        </div>
+      </div>
 
+      {/* -------- Breed Selection Card -------- */}
+      <div className="card">
+        <h2>Explore Dog Breeds</h2>
+        <p>Select a breed to begin</p>
         <select
           value={selectedBreed}
           onChange={(e) => setSelectedBreed(e.target.value)}
         >
-          <option value="">Choose a dog breed</option>
-          {breeds.map((breed) => (
-            <option key={breed} value={breed}>
-              {breed}
+          <option value="">Choose a breed...</option>
+          {breeds.map((b) => (
+            <option key={b} value={b}>
+              {b.charAt(0).toUpperCase() + b.slice(1)}
             </option>
           ))}
         </select>
       </div>
 
-      {/* ⬇ Use the Slideshow component here */}
-      <Slideshow images={images} currentIndex={currentIndex} />
+      {/* -------- Slideshow Section -------- */}
+      {images.length > 0 && (
+        <div className="slideshow-container">
+          <img
+            key={index}
+            src={images[index]}
+            className="slide-image fade"
+            alt="Dog"
+          />
+        </div>
+      )}
+
+      {/* -------- Footer -------- */}
+      <footer className="footer">
+        <p>Dog Explorer © Ram 2025</p>
+      </footer>
     </div>
   );
 }
 
-export default App;
+// Wrap App with AuthProvider
+export default function AppWrapper() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
